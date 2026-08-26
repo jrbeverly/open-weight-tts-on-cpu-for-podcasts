@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kokoro Podcast on CPU</title>
+<style>
+  body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: #e8fff6; background: radial-gradient(circle at 20% 0%, #155e63, #0b1d2e 55%, #120a2a); min-height: 100vh; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px; }
+  h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.05; margin: 0 0 12px; background: linear-gradient(90deg, #5cf2c4, #ffd166, #ff7eb6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { color: #a9d6cc; margin: 0 0 28px; }
+  .player { background: #ffffff12; border: 1px solid #5cf2c455; border-radius: 20px; padding: 20px; }
+  .player h2 { margin: 0 0 12px; font-size: 1.1rem; }
+  audio { width: 100%; }
+  #script { margin-top: 32px; }
+  .turn { padding: 12px 16px; border-radius: 14px; margin: 10px 0; }
+  .turn b { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; }
+  .host { background: #ffd16618; border-left: 4px solid #ffd166; } .host b { color: #ffd166; }
+  .expert { background: #ff7eb618; border-left: 4px solid #ff7eb6; margin-left: 24px; } .expert b { color: #ff7eb6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Open-Weight TTS on CPU for Technical Podcasts</h1>
+  <p class="lede">A two-voice technical explainer rendered locally on CPU with Kokoro-82M (<code>am_michael</code> as host, <code>af_heart</code> as expert).</p>
+
+  <div class="player">
+    <h2 id="title">Example episode</h2>
+    <audio controls preload="metadata" src="docs/example-episode.mp3"></audio>
+  </div>
+
+  <div id="script"></div>
+</main>
+<script>
+fetch('script.json').then(r => r.json()).then(s => {
+  document.getElementById('title').textContent = s.title;
+  document.getElementById('script').innerHTML = s.turns.map(t => `<div class="turn ${t.speaker}"><b>${t.speaker}</b>${t.text}</div>`).join('');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+{
+  "title": "Securing internal endpoints with mTLS on CloudFront",
+  "note": "Two writing personas. The host provides structure, introduces the topic, and asks clear questions that move the technical discussion forward. The expert carries the technical explanation in a professional but natural lecture style. The expert is explicitly presented as an AI agent and subject matter expert on the implementation. 'mutual TLS' is spelled out where it is first defined; everywhere after that it is mTLS.",
+  "turns": [
+    {
+      "speaker": "host",
+      "text": "Welcome to Securing Internal Endpoints with mTLS on CloudFront. Today we're going to be discussing how we use mTLS in our environment to secure internal endpoints, while still allowing those endpoints to be available over the internet where that makes sense. I'm joined today by Atlas, an AI agent and subject matter expert on the implementation details of this system. So Atlas, let's start with the problem itself. What are we actually trying to solve here?"
+    },
+    {
+      "speaker": "expert",
+      "text": "The basic problem is that we have a growing number of internal services that employees need to access. That includes things like administrative panels, internal APIs, and operational tools. We want those services to be easy for employees to reach, but we don't want them generally accessible to somebody simply because they know the URL."
+    },
+
+    {
+      "speaker": "host",
+      "text": "So at a high level, we have services that need to remain internal in terms of who can access them, but that doesn't necessarily mean the services themselves have to live entirely inside a private network. How do we approach that?"
+    },
+
+    {
+      "speaker": "expert",
+      "text": "Right. One option would be to solve the problem entirely through private networking. You could use VPNs, transit gateways, private routing, service meshes, peering, and private DNS. That's a perfectly valid architecture, and there are environments where that's exactly what you should do. But it also means taking ownership of quite a lot of networking infrastructure. Our approach is different. We allow certain services to be internet reachable, often through shared infrastructure that's already tightly controlled, and then put explicit controls in front of them that determine who can actually establish a connection."
+    },
+
+    {
+      "speaker": "host",
+      "text": "And that's where mTLS comes into the picture. Before we get into the implementation, what exactly is mTLS?"
+    },
+
+    {
+      "speaker": "expert",
+      "text": "mTLS stands for mutual TLS, and conceptually it's an extension of the TLS connection you're already familiar with. With ordinary TLS, the client verifies the identity of the server by checking its certificate. With mutual TLS, that verification happens in both directions. The server presents its certificate to the client, but the client also has to present a certificate to the server. The server then verifies that the client certificate chains back to a certificate authority that it trusts. If it doesn't, the connection is rejected."
+    },
+
+    {
+      "speaker": "host",
+      "text": "So how does that fit into the rest of the security model? Is the client certificate itself enough to decide that somebody should have access?"
+    },
+
+    {
+      "speaker": "expert",
+      "text": "No, and that's an important distinction. We treat this as a layered system, with each layer answering a different question. First, there's a web application firewall in front of CloudFront with an IP allowlist. That asks whether the request is coming from a corporate address range. Then there's mTLS, which asks whether the connecting client possesses a certificate that we issued and trust. Finally, there's authentication inside the application itself, which determines which person is actually using the service. Those are separate controls because they're establishing different things."
+    },
+
+    {
+      "speaker": "host",
+      "text": "Where does CloudFront fit into the certificate validation itself? Does the application behind CloudFront need to perform that check?"
+    },
+
+    {
+      "speaker": "expert",
+      "text": "That's one of the useful parts of this architecture. CloudFront can perform the client certificate validation at the edge. We provide CloudFront with a trust store, which is essentially the set of certificate authorities that we're willing to trust for client certificates. When a connection arrives, CloudFront can validate the certificate before the request ever reaches the origin."
+    },
+
+    {
+      "speaker": "expert",
+      "text": "In required mode, if the client doesn't provide a valid certificate, CloudFront rejects the connection at the edge. There's also a passthrough mode. In that case, CloudFront verifies that the client actually possesses the private key associated with the certificate and then forwards the certificate chain to the origin. The application can then make its own authorization decision using that information."
+    },
+
+    {
+      "speaker": "host",
+      "text": "So stepping back from the individual components, what does this architecture give us operationally?"
+    },
+
+    {
+      "speaker": "expert",
+      "text": "It gives us a relatively small set of explicit checks. Is the request coming from an approved corporate network? Is the client presenting a certificate that we trust? And is the user properly authenticated to the application? We can reason about those controls independently, and we can troubleshoot them independently. That lets us expose an internal service through standard internet-facing infrastructure without treating internet reachability as equivalent to application access."
+    },
+
+    {
+      "speaker": "host",
+      "text": "And I think that's a good place to close it out. The important distinction is that the endpoint can be reachable over the internet without being generally accessible from the internet. The IP controls, mTLS validation at CloudFront, and application authentication each establish a different part of that boundary. Atlas, thanks for walking us through the implementation."
+    },
+
+    {
+      "speaker": "expert",
+      "text": "Absolutely. Thanks for having me."
+    }
+  ]
+}
